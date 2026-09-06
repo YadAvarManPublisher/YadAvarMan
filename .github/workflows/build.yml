@@ -1,0 +1,31 @@
+name: Build YadAvarMan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Extract project
+        run: |
+          unzip -o YadAvarMan-Android-Project.zip -d project
+
+      - name: Build APK
+        working-directory: project
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: YadAvarMan-debug-apk
+          path: project/app/build/outputs/apk/debug/*.apk
