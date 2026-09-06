@@ -8,24 +8,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download repository
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Show files
+        run: |
+          echo "Files in repository:"
+          ls -la
+          find . -maxdepth 2 -type f -print
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.10.2"
+          gradle-version: '8.10.2'
 
-      - name: Extract project
+      - name: Find and extract project
         run: |
-          unzip -o YadAvarMan-Android-Project.zip -d project
+          ZIP_FILE=$(find . -maxdepth 2 -type f -name "*.zip" | head -n 1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: No ZIP file found."
+            exit 1
+          fi
+
+          echo "Found ZIP: $ZIP_FILE"
+          mkdir -p project
+          unzip -o "$ZIP_FILE" -d project
+
+          echo "Extracted files:"
+          find project -maxdepth 3 -type f -print
 
       - name: Build APK
-        working-directory: project
+        working-directory: project/YadAvarMan
         run: gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: YadAvarMan-debug-apk
-          path: project/app/build/outputs/apk/debug/*.apk
+          path: project/YadAvarMan/app/build/outputs/apk/debug/*.apk
